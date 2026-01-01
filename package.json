@@ -1,0 +1,16 @@
+{
+  "name": "enterprise-notebooklm",
+  "version": "1.0.0",
+  "description": "Enterprise NotebookLM - Full Stack Web Application",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "build": "npm --prefix client run build && npm --prefix server run build",
+    "start": "npm --prefix server run start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
