@@ -1,138 +1,154 @@
-# Enterprise NotebookLM
+# Enterprise NotebookLM for ERP
 
-An enterprise-level BI personal assistant platform inspired by Google NotebookLM. This application enables data engineers, data scientists, and business administrators to connect multiple data sources and interact with them through an AI-powered chat interface.
+企业级智能 BI 助手平台，面向企业管理人员的ERP数据分析与报告生成服务。
 
-## Features
+## 主要功能
 
-- **Multi-Source Data Integration**: Connect CSV files, databases (PostgreSQL, MySQL, SQLite), PDF documents, and web APIs
-- **AI-Powered Chat**: Interactive chat interface powered by Google Gemini for data analysis and insights
-- **Data Science Tools** (Studio Panel):
-  - 📈 **Prediction**: Time series forecasting and regression prediction
-  - 📉 **Curve Fitting**: Linear, polynomial, exponential, and logarithmic fitting
-  - 🎯 **Feature Extraction**: PCA, feature importance, and clustering analysis
-  - 🔍 **Anomaly Detection**: Statistical (IQR/Z-Score), Isolation Forest, DBSCAN
-  - 📊 **Statistical Analysis**: Descriptive statistics, distribution analysis, hypothesis testing
-  - 🔗 **Correlation Analysis**: Pearson, Spearman, Kendall correlation with heatmap visualization
-- **Content Generation Tools**:
-  - 📄 Insights Report Generator
-  - 📋 One-Page Brief Generator
-  - 🎬 Presentation (PPT) Generator
-  - 🎙️ Audio Overview (Coming Soon)
-- **Data Operation Tools**:
-  - 📤 Data Exporter (CSV/Excel)
-  - ➕ Data Source Creator
-- **Modern UI**: Three-column responsive layout with resizable panels and grid-based tool panel
-- **Bilingual Support**: Chinese and English mixed input support
+### 数据源管理（左侧面板）
 
-## Tech Stack
+#### 三大数据源Tab
+| Tab | 说明 |
+|-----|------|
+| **Query** | 数据库定制、指标体系浏览、集成记录 |
+| **IM** | 飞书、企业微信、邮件（微信合并消息形式） |
+| **离线** | 上传文件（CSV, Excel, PDF等） |
 
-### Frontend
-- React 18 + TypeScript
-- Vite
-- Tailwind CSS
-- Zustand (State Management)
-- Radix UI (Accessible Components)
-- Lucide React (Icons)
-- React Markdown
+#### 指标体系
+- 标准报表（财务、应收、应付、库存等）
+- KPI指标（营收增长率、毛利率等）
+- 预测报表（销售预测、现金流预测）
+- 点击指标显示：描述、数据来源、可增强方向
 
-### Backend (Planned)
+### 多源数据集成（核心功能）
+1. 选择多个数据源（报表/IM/文件）
+2. 点击「集成」按钮
+3. Agent自动分析列和行值
+4. 生成集成报表（表格+图表+标签）
+5. 用户可讨论修改后确认保存
+
+### 智能分析工具
+| 工具 | 功能 | 状态 |
+|------|------|------|
+| 预测 | 时间序列预测 | 选中数据时高亮 |
+| 拟合 | 曲线拟合分析 | 选中数据时高亮 |
+| 分类 | 数据分类 | 选中数据时高亮 |
+| 特征 | 特征提取 | 选中数据时高亮 |
+
+### 内容生成（Studio面板）
+- 📄 报告（Report）- Markdown/PDF
+- 📋 简报（Brief）- 单页PDF
+- 🎬 演示文稿（PPT）
+- 📤 数据导出（CSV/Excel）
+
+## 界面截图
+
+### 主界面
+三栏布局设计，Dark Mode风格：
+
+![主界面](docs/screenshots/Screenshot%202026-01-07%20at%2016.01.15.png)
+
+| 区域 | 功能 |
+|------|------|
+| **左侧面板** | 数据源管理（Query/IM/离线），方形Tab按钮 |
+| **中间面板** | AI对话、集成报表展示、分析图表 |
+| **右侧面板（Studio）** | 内容生成工具、工作交付件管理 |
+
+## 技术栈
+
+### 前端
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| React | 18.x | UI框架 |
+| TypeScript | 5.x | 类型安全 |
+| Vite | 5.x | 构建工具 |
+| Tailwind CSS | 3.x | 样式框架 |
+| Zustand | 4.x | 状态管理 |
+| Lucide React | - | 图标库 |
+
+### 后端（规划中）
 - Node.js + Express
 - Google Gemini API
-- PostgreSQL/MySQL connectors
+- PostgreSQL/MySQL连接器
 
-## Getting Started
+## 快速开始
 
-### Prerequisites
+### 环境要求
 - Node.js 18+
-- npm or yarn
+- npm 或 yarn
 
-### Installation
+### 安装步骤
 
-1. Clone the repository
 ```bash
+# 克隆仓库
 git clone https://github.com/rootliu/enterprise-notebooklm.git
 cd enterprise-notebooklm
-```
 
-2. Install dependencies
-```bash
-# Install root dependencies
+# 安装依赖
 npm install
+cd client && npm install
 
-# Install client dependencies
-cd client
-npm install
-```
-
-3. Start the development server
-```bash
-cd client
+# 启动开发服务器
 npm run dev
 ```
 
-4. Open http://localhost:5173 in your browser
+打开浏览器访问 http://localhost:5173
 
-## Project Structure
+## 项目结构
 
 ```
 enterprise-notebooklm/
-├── client/                 # React frontend
+├── client/                     # React前端
 │   ├── src/
-│   │   ├── components/     # React components
-│   │   │   ├── Layout/     # Layout components
-│   │   │   ├── DataPanel/  # Data source management
-│   │   │   ├── ChatPanel/  # AI chat interface
-│   │   │   └── ToolPanel/  # Content generation tools
-│   │   ├── store/          # Zustand state management
-│   │   ├── types/          # TypeScript type definitions
-│   │   └── App.tsx         # Main application
-│   └── package.json
-├── server/                 # Express backend (planned)
-├── docs/                   # Documentation
-│   ├── REQUIREMENTS.md     # Project requirements
-│   └── UI_DESIGN.md        # UI/UX specifications
+│   │   ├── components/
+│   │   │   ├── Layout/         # 布局组件
+│   │   │   ├── DataPanel/      # 数据源面板
+│   │   │   │   ├── QueryTab.tsx    # Query子Tab
+│   │   │   │   ├── IMTab.tsx       # IM消息
+│   │   │   │   └── OfflineTab.tsx  # 离线文件
+│   │   │   ├── ChatPanel/      # AI对话面板
+│   │   │   │   ├── IntegrationReportView.tsx  # 集成报表
+│   │   │   │   └── InputArea.tsx   # 输入区域
+│   │   │   └── StudioPanel/    # Studio工具面板
+│   │   ├── store/
+│   │   │   └── metricsStore.ts # 指标状态管理
+│   │   └── types/
+├── server/                     # Express后端（规划中）
+├── docs/
+│   ├── REQUIREMENTS.md         # 需求文档v2.0
+│   ├── UI_DESIGN.md            # UI设计规范
+│   └── screenshots/            # 截图
 └── package.json
 ```
 
-## Screenshots
+## 开发进度
 
-The application features a modern three-column layout:
-- **Left Panel**: Data source management with search, filtering, tag organization, and data quality indicators
-- **Center Panel**: AI chat interface for data analysis, Q&A, and inline visualizations
-- **Right Panel (Studio)**: Grid-based tool panel with data science tools, content generation tools, and generated content list
+### Phase 1: UI原型 ✅
+- [x] Dark Mode UI重构
+- [x] 方形Tab按钮样式
+- [x] Query三分类（DB/指标/集成记录）
+- [x] 指标详情面板
+- [x] IM合并消息形式
+- [x] 离线文件摘要+标签
+- [x] 集成报表展示
+- [x] 工具栏动态高亮
+- [x] 交付件管理
 
-## Roadmap
+### Phase 2: 集成功能
+- [ ] 多源数据选择
+- [ ] Agent智能集成
+- [ ] 自动标签生成
+- [ ] 自动图表生成
 
-### Phase 1 - Core Infrastructure
-- [ ] Backend API implementation
-- [ ] Google Gemini integration
-- [ ] Database connectors (PostgreSQL, MySQL)
-- [ ] PDF parsing and analysis
+### Phase 3: 分析工具
+- [ ] 预测功能实现
+- [ ] 拟合功能实现
+- [ ] 分类功能实现
+- [ ] 特征提取实现
 
-### Phase 2 - Data Science Tools
-- [ ] Statistical Analysis tool
-- [ ] Correlation Analysis tool with heatmap
-- [ ] Anomaly Detection (IQR/Z-Score)
-- [ ] Prediction (Linear Regression)
-- [ ] Curve Fitting (Polynomial)
-- [ ] Feature Extraction (PCA)
-
-### Phase 3 - Content Generation
-- [ ] Insights Report generation (Markdown/PDF)
-- [ ] One-Page Brief generation
-- [ ] Presentation (PPT) generation
-- [ ] Data export functionality (CSV/Excel)
-
-### Phase 4 - Advanced Features
-- [ ] Audio Overview generation
-- [ ] User authentication
-- [ ] Multi-user collaboration
-- [ ] Advanced ML models (Random Forest, ARIMA)
-
-## License
+## 许可证
 
 MIT License
 
-## Author
+## 作者
 
 [rootliu](https://github.com/rootliu)

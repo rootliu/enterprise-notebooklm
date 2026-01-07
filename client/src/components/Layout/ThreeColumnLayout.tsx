@@ -3,10 +3,10 @@ import { Header } from './Header';
 import { StatusBar } from './StatusBar';
 import { DataPanel } from '../DataPanel';
 import { ChatPanel } from '../ChatPanel';
-import { ToolPanel } from '../ToolPanel';
+import { StudioPanel } from '../StudioPanel';
 
 export function ThreeColumnLayout() {
-  const [leftWidth, setLeftWidth] = useState(320);
+  const [leftWidth, setLeftWidth] = useState(300);
   const [rightWidth, setRightWidth] = useState(360);
 
   const handleLeftResize = (e: React.MouseEvent) => {
@@ -16,7 +16,7 @@ export function ThreeColumnLayout() {
 
     const onMouseMove = (moveEvent: MouseEvent) => {
       const delta = moveEvent.clientX - startX;
-      const newWidth = Math.max(280, Math.min(450, startWidth + delta));
+      const newWidth = Math.max(260, Math.min(400, startWidth + delta));
       setLeftWidth(newWidth);
     };
 
@@ -50,7 +50,7 @@ export function ThreeColumnLayout() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <Header />
 
       <main className="flex-1 flex overflow-hidden">
@@ -61,7 +61,8 @@ export function ThreeColumnLayout() {
 
         {/* Left Resize Handle */}
         <div
-          className="w-1 bg-gray-200 hover:bg-blue-500 cursor-col-resize transition-colors flex-shrink-0"
+          className="w-1 cursor-col-resize transition-colors flex-shrink-0"
+          style={{ backgroundColor: 'var(--border-color)' }}
           onMouseDown={handleLeftResize}
         />
 
@@ -72,13 +73,14 @@ export function ThreeColumnLayout() {
 
         {/* Right Resize Handle */}
         <div
-          className="w-1 bg-gray-200 hover:bg-blue-500 cursor-col-resize transition-colors flex-shrink-0"
+          className="w-1 cursor-col-resize transition-colors flex-shrink-0"
+          style={{ backgroundColor: 'var(--border-color)' }}
           onMouseDown={handleRightResize}
         />
 
-        {/* Right Panel - Tools */}
+        {/* Right Panel - Studio */}
         <div style={{ width: rightWidth, flexShrink: 0 }} className="h-full">
-          <ToolPanel />
+          <StudioPanel />
         </div>
       </main>
 

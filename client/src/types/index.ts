@@ -1,3 +1,6 @@
+// Re-export metrics types
+export * from './metrics';
+
 // Data Source Types
 export type DataSourceType = 'database' | 'file' | 'web' | 'generated';
 export type DataSourceFormat = 'csv' | 'pdf' | 'postgresql' | 'mysql' | 'sqlite' | 'api' | 'excel' | 'json';

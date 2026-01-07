@@ -1,35 +1,50 @@
-import { Settings, HelpCircle, User } from 'lucide-react';
+import { Settings, HelpCircle, User, Database } from 'lucide-react';
 
 export function Header() {
   return (
-    <header className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-lg">E</span>
+    <header
+      className="h-14 px-5 flex items-center justify-between"
+      style={{
+        backgroundColor: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border-color)'
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className="w-9 h-9 rounded-lg flex items-center justify-center"
+          style={{ backgroundColor: 'var(--accent-blue)' }}
+        >
+          <Database size={18} className="text-white" />
         </div>
-        <h1 className="text-xl font-semibold text-gray-900">
-          Enterprise NotebookLM
-        </h1>
+        <div>
+          <h1 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Enterprise NotebookLM
+          </h1>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>ERP Edition</span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <button
-          className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 rounded-lg transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
           title="Help"
         >
-          <HelpCircle size={22} />
+          <HelpCircle size={20} />
         </button>
         <button
-          className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 rounded-lg transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
           title="Settings"
         >
-          <Settings size={22} />
+          <Settings size={20} />
         </button>
         <button
-          className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+          style={{ backgroundColor: 'var(--bg-tertiary)' }}
           title="User"
         >
-          <User size={20} className="text-gray-600" />
+          <User size={18} style={{ color: 'var(--text-secondary)' }} />
         </button>
       </div>
     </header>

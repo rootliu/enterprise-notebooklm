@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import type { DataSource, Message, GeneratedContent, RightPanelMode, DataDetail } from '../types';
 
+// Re-export metrics store
+export { useMetricsStore } from './metricsStore';
+
 // Mock data for prototype
 const mockDataSources: DataSource[] = [
   {

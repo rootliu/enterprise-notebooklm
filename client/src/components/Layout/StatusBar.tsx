@@ -1,25 +1,30 @@
-import { useDataSourceStore } from '../../store';
+import { useMetricsStore } from '../../store';
 
 export function StatusBar() {
-  const { dataSources } = useDataSourceStore();
-  const connectedCount = dataSources.filter(d => d.status === 'connected').length;
+  const { selectedMetrics } = useMetricsStore();
 
   return (
-    <footer className="h-8 bg-gray-50 border-t border-gray-200 px-4 flex items-center justify-between text-xs text-gray-600">
+    <footer
+      className="h-7 px-4 flex items-center justify-between text-xs"
+      style={{
+        backgroundColor: 'var(--bg-secondary)',
+        borderTop: '1px solid var(--border-color)',
+        color: 'var(--text-muted)'
+      }}
+    >
       <div className="flex items-center gap-2">
         <span
-          className={`w-2 h-2 rounded-full ${
-            connectedCount > 0 ? 'bg-green-500' : 'bg-gray-400'
-          }`}
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: selectedMetrics.length > 0 ? 'var(--accent-green)' : 'var(--text-muted)' }}
         />
         <span>
-          Connected to {connectedCount} data source{connectedCount !== 1 ? 's' : ''}
+          {selectedMetrics.length} metric{selectedMetrics.length !== 1 ? 's' : ''} selected
         </span>
       </div>
 
       <div className="flex items-center gap-4">
-        <span className="text-gray-400">Last sync: just now</span>
-        <span className="text-gray-400">v0.1.0</span>
+        <span>Agent: Ready</span>
+        <span>v0.2.0-erp</span>
       </div>
     </footer>
   );
