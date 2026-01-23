@@ -193,6 +193,18 @@ Agent 自动完成：
 | **Qwen** | 阿里云 | 中文优化 |
 | **GLM** | 智谱 | 国产可控 |
 
+#### 2.3.5 AI 模型配置（重要）
+
+**默认模型配置 - 请勿修改：**
+
+| 配置项 | 值 | 说明 |
+|--------|-----|------|
+| **API Key** | `AIzaSyCt7PZfa7OH2PkNoMGQQ6PQGwVybqlK3EE` | 硬编码，不从环境变量读取 |
+| **模型** | `gemini-3-pro-preview` | Gemini 3 Pro 模型 |
+| **SDK** | `@google/generative-ai` | Google Generative AI SDK |
+
+> **重要**: 此配置为项目固定配置，所有 AI 分析功能（文件分析、对话、摘要生成）必须使用此配置。实现时必须硬编码，不得从环境变量或配置文件读取。
+
 ---
 
 ### 2.4 工作交付管理（右侧面板 - Studio）

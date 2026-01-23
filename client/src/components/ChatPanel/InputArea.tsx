@@ -9,8 +9,10 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
-import { useChatStore, useMetricsStore } from '../../store';
+import { useChatStore, useMetricsStore, useContextStore } from '../../store';
 import type { LLMModel } from '../../types';
+import type { OfflineFile } from '../../store/metricsStore';
+import * as api from '../../services/api';
 
 const models: { id: LLMModel; name: string; color: string }[] = [
   { id: 'gemini', name: 'Gemini', color: '#4285f4' },
@@ -35,6 +37,7 @@ const analysisTools = [
 
 export function InputArea() {
   const { inputValue, setInputValue, sendMessage, isLoading } = useChatStore();
+  const { contextFileIds, contextType, addToContext } = useContextStore();
   const {
     selectedMetrics,
     selectedIMMessages,
@@ -42,15 +45,18 @@ export function InputArea() {
     currentIntegration,
     selectedModel,
     setSelectedModel,
+    addOfflineFile,
   } = useMetricsStore();
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [activeAnalysisTool, setActiveAnalysisTool] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentModel = models.find((m) => m.id === selectedModel) || models[0];
 
-  // Analysis tools are enabled when user has selected metrics/files or has an integration report
+  // Analysis tools are enabled when user has context files
   const analysisToolsEnabled =
+    contextFileIds.length > 0 ||
     selectedMetrics.length > 0 ||
     selectedIMMessages.length > 0 ||
     selectedFiles.length > 0 ||
@@ -65,7 +71,8 @@ export function InputArea() {
 
   const handleSubmit = () => {
     if (inputValue.trim() && !isLoading) {
-      sendMessage(inputValue.trim());
+      // Use context files for the chat
+      sendMessage(inputValue.trim(), contextFileIds, contextType);
     }
   };
 
@@ -76,6 +83,53 @@ export function InputArea() {
     }
   };
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      for (const file of Array.from(files)) {
+        try {
+          // Upload to backend with full context type (from chat panel)
+          const result = await api.uploadFile(file, 'full');
+
+          const ext = file.name.split('.').pop()?.toLowerCase() || '';
+          let format: OfflineFile['format'] = 'csv';
+
+          if (['xlsx', 'xls'].includes(ext)) format = 'excel';
+          else if (ext === 'csv') format = 'csv';
+          else if (ext === 'json') format = 'json';
+          else if (ext === 'pdf') format = 'pdf';
+          else if (['html', 'htm'].includes(ext)) format = 'html';
+          else if (['md', 'markdown'].includes(ext)) format = 'markdown';
+          else if (['doc', 'docx'].includes(ext)) format = 'docx';
+
+          const newFile: OfflineFile = {
+            id: result.id,
+            name: result.name,
+            format,
+            size: result.size,
+            uploadedAt: new Date(),
+            summary: result.summary || '正在分析文件内容...',
+            tags: result.tags || [],
+            status: result.status as OfflineFile['status'],
+          };
+
+          addOfflineFile(newFile);
+
+          // Auto-add to context when uploaded from chat panel
+          addToContext(result.id);
+        } catch (error) {
+          console.error('Upload failed:', error);
+          alert(`上传失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
+      }
+    }
+    e.target.value = '';
+  };
+
   return (
     <div
       className="p-4"
@@ -84,11 +138,21 @@ export function InputArea() {
         borderTop: '1px solid var(--border-color)',
       }}
     >
-      {/* Selected Metrics Indicator */}
-      {selectedMetrics.length > 0 && (
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".csv,.xlsx,.xls,.pdf,.html,.htm,.md,.markdown,.docx,.doc"
+        multiple
+        className="hidden"
+      />
+
+      {/* Context Indicator */}
+      {contextFileIds.length > 0 && (
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            已选指标:
+            Context:
           </span>
           <span
             className="px-2 py-0.5 text-xs rounded"
@@ -97,7 +161,16 @@ export function InputArea() {
               color: 'white',
             }}
           >
-            {selectedMetrics.length} 个
+            {contextFileIds.length} 个文件
+          </span>
+          <span
+            className="px-2 py-0.5 text-xs rounded"
+            style={{
+              backgroundColor: contextType === 'full' ? 'var(--accent-green)' : 'var(--accent-orange)',
+              color: 'white',
+            }}
+          >
+            {contextType === 'full' ? '完整内容' : '仅摘要'}
           </span>
         </div>
       )}
@@ -109,7 +182,11 @@ export function InputArea() {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="输入问题，AI 将通过 Agent 获取数据并分析..."
+          placeholder={
+            contextFileIds.length > 0
+              ? '基于已选文件进行提问...'
+              : '输入问题，AI 将通过 Agent 获取数据并分析...'
+          }
           rows={1}
           className="w-full px-4 py-3 pr-12 text-sm rounded-xl resize-none focus:outline-none"
           style={{
@@ -129,9 +206,7 @@ export function InputArea() {
           disabled={!inputValue.trim() || isLoading}
         >
           {isLoading ? (
-            <div
-              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-            />
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
             <Send size={16} />
           )}
@@ -154,6 +229,7 @@ export function InputArea() {
                   backgroundColor: 'transparent',
                 }}
                 title={tool.name}
+                onClick={tool.id === 'upload' ? handleUploadClick : undefined}
               >
                 <Icon size={14} />
                 <span className="hidden sm:inline">{tool.name}</span>
@@ -178,7 +254,6 @@ export function InputArea() {
                 onClick={() => {
                   if (isEnabled) {
                     setActiveAnalysisTool(isActive ? null : tool.id);
-                    // TODO: Trigger analysis action
                   }
                 }}
                 disabled={!isEnabled}

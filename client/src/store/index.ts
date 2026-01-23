@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { DataSource, Message, GeneratedContent, RightPanelMode, DataDetail } from '../types';
+import * as api from '../services/api';
 
 // Re-export metrics store
 export { useMetricsStore } from './metricsStore';
@@ -145,30 +146,77 @@ export const useDataSourceStore = create<DataSourceState>((set) => ({
   setSortBy: (sort) => set({ sortBy: sort }),
 }));
 
+// Context Store - manages files added to chat context
+interface ContextState {
+  contextFileIds: string[];
+  contextType: 'summary' | 'full';
+
+  addToContext: (fileId: string) => void;
+  removeFromContext: (fileId: string) => void;
+  clearContext: () => void;
+  setContextType: (type: 'summary' | 'full') => void;
+  replaceContext: (fileIds: string[]) => void;
+}
+
+export const useContextStore = create<ContextState>((set) => ({
+  contextFileIds: [],
+  contextType: 'summary',
+
+  addToContext: (fileId) =>
+    set((state) => ({
+      contextFileIds: state.contextFileIds.includes(fileId)
+        ? state.contextFileIds
+        : [...state.contextFileIds, fileId],
+    })),
+
+  removeFromContext: (fileId) =>
+    set((state) => ({
+      contextFileIds: state.contextFileIds.filter((id) => id !== fileId),
+    })),
+
+  clearContext: () => set({ contextFileIds: [] }),
+
+  setContextType: (type) => set({ contextType: type }),
+
+  replaceContext: (fileIds) => set({ contextFileIds: fileIds }),
+}));
+
 // Chat Store
 interface ChatState {
   messages: Message[];
   isLoading: boolean;
   inputValue: string;
+  sessionName: string;
+  isModified: boolean;
 
   addMessage: (message: Message) => void;
   setLoading: (loading: boolean) => void;
   setInputValue: (value: string) => void;
-  sendMessage: (content: string) => void;
+  sendMessage: (content: string, contextFileIds: string[], contextType: 'summary' | 'full') => void;
   clearChat: () => void;
+  setSessionName: (name: string) => void;
+  setMessages: (messages: Message[]) => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
+export const useChatStore = create<ChatState>((set, get) => ({
   messages: mockMessages,
   isLoading: false,
   inputValue: '',
+  sessionName: '',
+  isModified: false,
 
-  addMessage: (message) => set((state) => ({
-    messages: [...state.messages, message]
-  })),
+  addMessage: (message) =>
+    set((state) => ({
+      messages: [...state.messages, message],
+      isModified: true,
+    })),
+
   setLoading: (loading) => set({ isLoading: loading }),
   setInputValue: (value) => set({ inputValue: value }),
-  sendMessage: (content) => {
+  setSessionName: (name) => set({ sessionName: name }),
+  setMessages: (messages) => set({ messages, isModified: false }),
+
+  sendMessage: async (content, contextFileIds, contextType) => {
     const userMessage: Message = {
       id: `m${Date.now()}`,
       role: 'user',
@@ -181,92 +229,60 @@ export const useChatStore = create<ChatState>((set) => ({
       messages: [...state.messages, userMessage],
       inputValue: '',
       isLoading: true,
+      isModified: true,
     }));
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Call real API
+      const response = await api.sendChatMessage(content, contextFileIds, contextType);
+
       const assistantMessage: Message = {
-        id: `m${Date.now() + 1}`,
+        id: response.id,
         role: 'assistant',
-        content: generateMockResponse(content),
+        content: response.content,
         contentType: 'mixed',
-        citations: [
-          {
-            dataSourceId: '1',
-            dataSourceName: 'sales_2024.csv',
-            location: { rowStart: 1, rowEnd: 100, columns: ['revenue', 'region'] },
-            preview: '销售数据摘要',
-          },
-        ],
-        timestamp: new Date(),
+        timestamp: new Date(response.timestamp),
       };
 
       set((state) => ({
         messages: [...state.messages, assistantMessage],
         isLoading: false,
       }));
-    }, 1500);
+    } catch (error) {
+      console.error('Chat error:', error);
+
+      // Add error message
+      const errorMessage: Message = {
+        id: `m${Date.now() + 1}`,
+        role: 'assistant',
+        content: `抱歉，发生了错误：${error instanceof Error ? error.message : '未知错误'}`,
+        contentType: 'text',
+        timestamp: new Date(),
+      };
+
+      set((state) => ({
+        messages: [...state.messages, errorMessage],
+        isLoading: false,
+      }));
+    }
   },
-  clearChat: () => set({ messages: mockMessages }),
+
+  clearChat: () =>
+    set({
+      messages: [
+        {
+          id: 'm1',
+          role: 'assistant',
+          content:
+            '欢迎使用 Enterprise NotebookLM！我可以帮助您分析数据、生成报告和获取洞察。\n\n请从左侧选择数据源，然后告诉我您想了解什么。',
+          contentType: 'text',
+          timestamp: new Date(),
+        },
+      ],
+      isModified: false,
+      sessionName: '',
+    }),
 }));
-
-function generateMockResponse(query: string): string {
-  if (query.includes('销售') || query.includes('revenue')) {
-    return `根据 **sales_2024.csv** 的数据分析，我发现以下关键洞察：
-
-## 销售额概览
-
-| 地区 | 销售额 | 占比 | 同比增长 |
-|------|--------|------|----------|
-| 华东 | ¥2,345,678 | 35% | +12% |
-| 华南 | ¥1,876,543 | 28% | +8% |
-| 华北 | ¥1,234,567 | 18% | +15% |
-| 西南 | ¥876,543 | 13% | +5% |
-| 其他 | ¥432,100 | 6% | -2% |
-
-### 关键发现
-
-1. **华东地区表现最强**：贡献了35%的总销售额，且保持12%的稳定增长
-2. **华北增长最快**：虽然占比较小，但同比增长达15%
-3. **其他地区需要关注**：出现了2%的负增长，建议进一步分析原因
-
-*数据来源：[sales_2024.csv:L1-1234]*`;
-  }
-
-  if (query.includes('客户') || query.includes('customer')) {
-    return `基于 **customer_db** 的分析结果：
-
-## 客户细分分析
-
-根据客户生命周期价值(LTV)和活跃度，我们将客户分为以下几类：
-
-- **高价值客户** (15%): 平均LTV ¥50,000+，复购率 85%
-- **成长型客户** (25%): 平均LTV ¥15,000-50,000，具有提升潜力
-- **普通客户** (45%): 平均LTV ¥5,000-15,000，需要激活策略
-- **流失风险客户** (15%): 90天内无交互，需要挽回措施
-
-### 建议行动
-
-1. 对高价值客户提供专属服务和VIP权益
-2. 针对成长型客户设计升级激励计划
-3. 对流失风险客户启动召回活动
-
-*数据来源：[customer_db]*`;
-  }
-
-  return `我已收到您的问题。基于当前选中的数据源，我可以提供以下分析：
-
-您的查询涉及到数据分析，请确保已选择相关的数据源。您可以：
-
-1. 在左侧面板选择一个或多个数据源
-2. 点击数据源查看详细信息和可用标签
-3. 使用标签快速构建查询
-
-有什么具体的数据分析需求吗？例如：
-- "统计各地区的销售额"
-- "分析客户流失原因"
-- "预测下季度趋势"`;
-}
 
 // UI Store
 interface UIState {

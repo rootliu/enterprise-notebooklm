@@ -29,11 +29,13 @@ export interface IMMessage {
 export interface OfflineFile {
   id: string;
   name: string;
-  format: 'csv' | 'excel' | 'json' | 'pdf' | 'word' | 'image';
+  format: 'csv' | 'excel' | 'json' | 'pdf' | 'word' | 'image' | 'html' | 'markdown' | 'docx';
   size: string;
   uploadedAt: Date;
   summary?: string;
   tags: string[];
+  status?: 'uploading' | 'analyzing' | 'ready' | 'error';
+  errorMessage?: string;
 }
 
 export interface IntegrationRecord {
@@ -279,6 +281,10 @@ interface MetricsState {
   // Model
   selectedModel: LLMModel;
 
+  // Search and Filter
+  searchQuery: string;
+  filterTags: string[];
+
   // Actions
   toggleNode: (nodeId: string) => void;
   toggleMetricSelection: (metricId: string) => void;
@@ -300,10 +306,20 @@ interface MetricsState {
   clearIntegration: () => void;
   addToIntegrationRecords: (record: IntegrationRecord) => void;
   saveRecordToQuery: (recordId: string) => void;
+  addOfflineFile: (file: OfflineFile) => void;
+  updateOfflineFile: (id: string, updates: Partial<OfflineFile>) => void;
+
+  // Search and Filter Actions
+  setSearchQuery: (query: string) => void;
+  setFilterTags: (tags: string[]) => void;
+  addFilterTag: (tag: string) => void;
+  removeFilterTag: (tag: string) => void;
+  clearFilterTags: () => void;
 
   // Computed
   hasSelection: () => boolean;
   getSelectionCount: () => number;
+  getFilteredFiles: () => OfflineFile[];
 }
 
 export const useMetricsStore = create<MetricsState>((set, get) => ({
@@ -332,6 +348,10 @@ export const useMetricsStore = create<MetricsState>((set, get) => ({
 
   // Initial Model
   selectedModel: 'gemini',
+
+  // Initial Search and Filter
+  searchQuery: '',
+  filterTags: [],
 
   // Actions
   toggleNode: (nodeId) =>
@@ -477,6 +497,37 @@ export const useMetricsStore = create<MetricsState>((set, get) => ({
       integrationRecords: [record, ...state.integrationRecords],
     })),
 
+  addOfflineFile: (file) =>
+    set((state) => ({
+      offlineFiles: [file, ...state.offlineFiles],
+    })),
+
+  updateOfflineFile: (id, updates) =>
+    set((state) => ({
+      offlineFiles: state.offlineFiles.map((file) =>
+        file.id === id ? { ...file, ...updates } : file
+      ),
+    })),
+
+  // Search and Filter Actions
+  setSearchQuery: (query) => set({ searchQuery: query }),
+
+  setFilterTags: (tags) => set({ filterTags: tags }),
+
+  addFilterTag: (tag) =>
+    set((state) => ({
+      filterTags: state.filterTags.includes(tag)
+        ? state.filterTags
+        : [...state.filterTags, tag],
+    })),
+
+  removeFilterTag: (tag) =>
+    set((state) => ({
+      filterTags: state.filterTags.filter((t) => t !== tag),
+    })),
+
+  clearFilterTags: () => set({ filterTags: [] }),
+
   // Computed
   hasSelection: () => {
     const state = get();
@@ -490,5 +541,29 @@ export const useMetricsStore = create<MetricsState>((set, get) => ({
     return state.selectedMetrics.length +
            state.selectedIMMessages.length +
            state.selectedFiles.length;
+  },
+
+  getFilteredFiles: () => {
+    const state = get();
+    let files = state.offlineFiles;
+
+    // Filter by tags (OR logic)
+    if (state.filterTags.length > 0) {
+      files = files.filter((file) =>
+        file.tags.some((tag) => state.filterTags.includes(tag))
+      );
+    }
+
+    // Filter by search query
+    if (state.searchQuery.trim()) {
+      const query = state.searchQuery.toLowerCase();
+      files = files.filter(
+        (file) =>
+          file.name.toLowerCase().includes(query) ||
+          (file.summary && file.summary.toLowerCase().includes(query))
+      );
+    }
+
+    return files;
   },
 }));

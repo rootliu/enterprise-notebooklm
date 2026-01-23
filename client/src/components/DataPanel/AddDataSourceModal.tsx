@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, FileSpreadsheet, Database, FileText, Globe, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useUIStore, useDataSourceStore } from '../../store';
 import type { DataSource } from '../../types';
 
@@ -11,6 +11,7 @@ export function AddDataSourceModal() {
   const { addDataSource } = useDataSourceStore();
   const [step, setStep] = useState<Step>('select');
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOpen = activeModal === 'addDataSource';
 
@@ -19,20 +20,29 @@ export function AddDataSourceModal() {
     setTimeout(() => setStep('select'), 200);
   };
 
-  const handleFileUpload = (type: 'csv' | 'pdf') => {
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const type = step as 'csv' | 'pdf';
     setIsUploading(true);
-    // Simulate upload
+
+    // TODO: Replace with actual upload to backend
     setTimeout(() => {
       const newSource: DataSource = {
         id: `new-${Date.now()}`,
-        name: type === 'csv' ? 'uploaded_data.csv' : 'uploaded_doc.pdf',
+        name: file.name,
         type: 'file',
         format: type,
         summary: 'Analyzing data source...',
         tags: [],
         rowCount: type === 'csv' ? 500 : undefined,
         columnCount: type === 'csv' ? 8 : undefined,
-        fileSize: type === 'csv' ? '1.2 MB' : '3.5 MB',
+        fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
         lastUpdated: new Date(),
         status: 'connected',
       };
@@ -40,6 +50,9 @@ export function AddDataSourceModal() {
       setIsUploading(false);
       handleClose();
     }, 1500);
+
+    // Reset input
+    event.target.value = '';
   };
 
   return (
@@ -109,9 +122,16 @@ export function AddDataSourceModal() {
 
             {(step === 'csv' || step === 'pdf') && (
               <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept={step === 'csv' ? '.csv' : '.pdf'}
+                  className="hidden"
+                />
                 <div
                   className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"
-                  onClick={() => handleFileUpload(step)}
+                  onClick={handleFileSelect}
                 >
                   {isUploading ? (
                     <div className="flex flex-col items-center gap-3">
@@ -157,7 +177,7 @@ export function AddDataSourceModal() {
                   </button>
                   <button
                     className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                    onClick={() => handleFileUpload(step)}
+                    onClick={handleFileSelect}
                   >
                     Upload
                   </button>
